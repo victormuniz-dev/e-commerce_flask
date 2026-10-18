@@ -1,6 +1,9 @@
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 
+# jsonify é utilizado para retorna json nos métodos
+# request é utilizado para captar o json do produto
+
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///ecomerce.db'
 
@@ -14,7 +17,7 @@ class Product(db.Model):
     price = db.Column(db.Float, nullable=False)
     description = db.Column(db.Text, nullable=True)
 
-# Adição de produtos no e-comerce
+# Adição de produtos no e-commerce
 # Método HTTP Post
 @app.route('/api/products/add', methods=["POST"])
 def add_product():
@@ -32,16 +35,56 @@ def add_product():
         return jsonify({"message":"Product added sucessfully"})
     return jsonify({"message":"Invalid product data"}), 400
 
+# Deleção de produtos no e-commerce
+# Método HTTP Delete
 @app.route('/api/products/delete/<int:product_id>', methods=["DELETE"])
 def delete_product(product_id):
     # Recuperar o produto da base de dados
-    # Verifica de o produto existe. Se existe, apagagar da base de dados. Se não, retorna erro 404 NOT_FOUND
+    # Verifica de o produto existe. Se existe, apagar da base de dados. Se não, retorna erro 404 NOT_FOUND
     product = Product.query.get(product_id)
-    if product:
+    if product: 
         db.session.delete(product)
         db.session.commit()
         return jsonify({"message":"Product deleted sucessfully"})
     return jsonify({"message":"Product does not exist"}), 404
+
+# Recuperação de produtos presentes no e-commerce
+# Método HTTP GET
+@app.route('/api/products/<int:product_id>', methods=["GET"])
+def get_product_datails(product_id):
+    product = Product.query.get(product_id)
+    if product:
+        return jsonify({
+            "id": product.id,
+            "name": product.name,
+            "price": product.price,
+            "description": product.description
+        })
+    return jsonify({"message":"Product not found"}), 404
+
+# Atualizar as informações de um produto
+# Método HTTP Put
+@app.route('/api/products/uptade/<int:product_id>', methods=['PUT'])
+def update_product(product_id):
+    product = Product.query.get(product_id)
+    if not product:
+        return jsonify({"message":"Product not found"}), 404
+   
+    data = request.json
+    if 'name' in data:
+        product.name = data['name']
+    if 'price' in data:
+        product.price = data['price']
+    if 'description' in data:
+        product.description = data['description']
+
+    # Sempre que houver uma alteração é necessário dar commit no BD.    
+    db.session.commit()
+
+    return jsonify({"message": "Product updated sucessfully"})
+    
+
+
 
 
 # Definir uma rota raiz (página inicial) e a função que será executada ao requesitar essa rota
