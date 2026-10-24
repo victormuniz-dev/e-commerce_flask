@@ -17,7 +17,19 @@ CORS(app)
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), nullable=False, unique=True)
-    password = db.Column(db.String(80), nullable=False)
+    password = db.Column(db.String(80), nullable=True)
+
+@app.route('/login', methods=["POST"])
+def login():
+    data = request.json
+    data.get("username")
+
+    user = User.query.filter_by(username=data.get("username")).first()
+
+    if user:
+        if data.get("password") == user.password: 
+            return jsonify({"message":"Logged in successfully"})
+    return jsonify({"message":"Unauthorized. Invalid credentials"}), 401
 
 # Modelagem do banco de dados
 # Produto (id, nome, price, description)
