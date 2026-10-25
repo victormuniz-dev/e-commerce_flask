@@ -1,15 +1,19 @@
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
-from flask_login import UserMixin
+from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user
 
 # jsonify é utilizado para retorna json nos métodos
 # request é utilizado para captar o json do produto
 
 app = Flask(__name__)
+app.config['SECRET_KEY'] = "minha_chave"
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///ecomerce.db'
 
+login_manager = LoginManager()
 db = SQLAlchemy(app)
+login_manager.init_app(app)
+login_manager.login_view = 'login'
 CORS(app)
 
 # Modelagem do usuário
@@ -19,17 +23,9 @@ class User(db.Model, UserMixin):
     username = db.Column(db.String(80), nullable=False, unique=True)
     password = db.Column(db.String(80), nullable=True)
 
-@app.route('/login', methods=["POST"])
-def login():
-    data = request.json
-    data.get("username")
-
-    user = User.query.filter_by(username=data.get("username")).first()
-
-    if user:
-        if data.get("password") == user.password: 
-            return jsonify({"message":"Logged in successfully"})
-    return jsonify({"message":"Unauthorized. Invalid credentials"}), 401
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(user_id)
 
 # Modelagem do banco de dados
 # Produto (id, nome, price, description)
@@ -39,8 +35,26 @@ class Product(db.Model):
     price = db.Column(db.Float, nullable=False)
     description = db.Column(db.Text, nullable=True)
 
+@app.route('/login', methods=["POST"])
+def login():
+    data = request.json
+    data.get("username")
+
+    user = User.query.filter_by(username=data.get("username")).first()
+
+    if user and data.get("password") == user.password:
+        return jsonify({"message":"Logged in successfully"})
+    return jsonify({"message":"Unauthorized. Invalid credentials"}), 401
+
+@login_required
+@app.route('/logout', methods=["POST"])
+def logout():
+    logout_user()
+    return jsonify({"message":"Logout sucessfully"})
+
 # Adição de produtos no e-commerce
 # Método HTTP Post
+@login_required
 @app.route('/api/products/add', methods=["POST"])
 def add_product():
     # obtem JSON com informações do produto.
@@ -59,6 +73,7 @@ def add_product():
 
 # Deleção de produtos no e-commerce
 # Método HTTP Delete
+@login_required
 @app.route('/api/products/delete/<int:product_id>', methods=["DELETE"])
 def delete_product(product_id):
     # Recuperar o produto da base de dados
@@ -86,6 +101,7 @@ def get_product_datails(product_id):
 
 # Atualizar as informações de um produto
 # Método HTTP Put
+@login_required
 @app.route('/api/products/uptade/<int:product_id>', methods=['PUT'])
 def update_product(product_id):
     product = Product.query.get(product_id)
