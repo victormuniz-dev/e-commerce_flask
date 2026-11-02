@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
-from flask_login import LoginManager, UserMixin, current_user, login_user, login_required, logout_user
+from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user,  current_user
 
 # jsonify é utilizado para retorna json nos métodos
 # request é utilizado para captar o json do produto
@@ -42,7 +42,7 @@ class CartItem(db.Model):
     product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False)
 
 
-@app.route('/login', methods=["POST"])
+@app.route('/login', methods=["POST", "GET"])
 def login():
     data = request.json
     data.get("username")
@@ -50,6 +50,7 @@ def login():
     user = User.query.filter_by(username=data.get("username")).first()
 
     if user and data.get("password") == user.password:
+        login_user(user)
         return jsonify({"message":"Logged in successfully"})
     return jsonify({"message":"Unauthorized. Invalid credentials"}), 401
 
@@ -144,8 +145,9 @@ def get_products():
         product_list.append(product_data)
     return jsonify(product_list)
 
-@login_required
+
 @app.route('/api/cart/add/<int:product_id>', methods=['POST'])
+@login_required
 def add_to_cart(product_id):
     user = User.query.get(int(current_user.id))
     product = Product.query.get(product_id)
