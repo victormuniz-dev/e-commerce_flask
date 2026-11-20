@@ -1,7 +1,7 @@
 # 🛒 E-commerce API com Flask
 
 <p align="center">
-  <img src="https://github.com/victormuniz-dev/ecommerce_flask/main/office_img.jpg" alt="Ilustração de um escritório de e-commerce à noite" width="100%">
+  <img src="/office_img.jpg" alt="Ilustração de um escritório de e-commerce à noite" width="100%">
 </p>
 
 API RESTful para gerenciamento de um sistema de e-commerce, desenvolvida como projeto prático durante o curso **Introdução ao Python com Flask** da **Rocketseat**.
